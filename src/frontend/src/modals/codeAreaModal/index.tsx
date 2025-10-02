@@ -26,6 +26,7 @@ import {
 } from "../../constants/constants";
 import useAlertStore from "../../stores/alertStore";
 import { useDarkStore } from "../../stores/darkStore";
+import { useUtilityStore } from "../../stores/utilityStore";
 import type { CodeErrorDataTypeAPI } from "../../types/api";
 import type { codeAreaModalPropsType } from "../../types/components";
 import BaseModal from "../baseModal";
@@ -43,6 +44,9 @@ export default function CodeAreaModal({
   setOpen: mySetOpen,
   componentId,
 }: codeAreaModalPropsType): JSX.Element {
+  const allowCustomComponents = useUtilityStore(
+    (state) => state.allowCustomComponents,
+  );
   const [code, setCode] = useState(value);
   const [open, setOpen] =
     mySetOpen !== undefined && myOpen !== undefined
@@ -211,7 +215,7 @@ export default function CodeAreaModal({
           <div className="h-full w-full">
             <AceEditor
               ref={codeRef}
-              readOnly={readonly}
+              readOnly={readonly || !allowCustomComponents}
               value={code}
               mode="python"
               setOptions={{ fontFamily: "monospace" }}
@@ -255,7 +259,7 @@ export default function CodeAreaModal({
               onClick={processCode}
               type="submit"
               id="checkAndSaveBtn"
-              disabled={readonly}
+              disabled={readonly || !allowCustomComponents}
               data-testid="checkAndSaveBtn"
             >
               Check & Save
