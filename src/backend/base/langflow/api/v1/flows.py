@@ -20,7 +20,14 @@ from lfx.log import logger
 from sqlmodel import and_, col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from langflow.api.utils import CurrentActiveUser, DbSession, cascade_delete_flow, remove_api_keys, validate_is_component
+from langflow.api.utils import (
+    CurrentActiveUser,
+    DbSession,
+    cascade_delete_flow,
+    flow_has_custom_components,
+    remove_api_keys,
+    validate_is_component,
+)
 from langflow.api.v1.schemas import FlowListCreate
 from langflow.helpers.user import get_user_by_flow_id_or_endpoint_name
 from langflow.initial_setup.constants import STARTER_FOLDER_NAME
@@ -433,6 +440,19 @@ async def upload_file(
     """Upload flows from a file."""
     contents = await file.read()
     data = orjson.loads(contents)
+
+    # Check if custom components are allowed
+    settings_service = get_settings_service()
+    if not settings_service.settings.allow_custom_components:
+        # Check if any flow contains custom components
+        flow_list_data = FlowListCreate(**data) if "flows" in data else FlowListCreate(flows=[FlowCreate(**data)])
+        for flow in flow_list_data.flows:
+            if flow.data and flow_has_custom_components({"data": flow.data}):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Custom components are disabled. Cannot import flows containing custom components.",
+                )
+
     response_list = []
     flow_list = FlowListCreate(**data) if "flows" in data else FlowListCreate(flows=[FlowCreate(**data)])
     # Now we set the user_id for all flows
