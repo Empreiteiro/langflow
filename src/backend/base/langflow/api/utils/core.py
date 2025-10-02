@@ -114,6 +114,7 @@ def flow_has_custom_components(flow_data: dict) -> bool:
     Custom components are identified by:
     - Having base_type as 'custom_components' or 'component' with code field
     - Having a 'code' template field with custom component code
+    - Having any template field with 'edited': true flag
     """
     nodes = flow_data.get("data", {}).get("nodes", [])
 
@@ -131,6 +132,11 @@ def flow_has_custom_components(flow_data: dict) -> bool:
             code_value = template.get("code", {}).get("value", "")
             # Check if code contains CustomComponent class definition
             if isinstance(code_value, str) and "class CustomComponent" in code_value:
+                return True
+
+        # Check if any template field has 'edited': true
+        for field_value in template.values():
+            if isinstance(field_value, dict) and field_value.get("edited") is True:
                 return True
 
     return False

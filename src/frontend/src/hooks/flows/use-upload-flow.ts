@@ -9,6 +9,19 @@ const useUploadFlow = () => {
   const addFlow = useAddFlow();
   const paste = useFlowStore((state) => state.paste);
 
+  const hasEditedComponents = (flow: any): boolean => {
+    if (!flow?.data?.nodes) return false;
+
+    return flow.data.nodes.some((node: any) => {
+      if (node?.data?.node?.template) {
+        return Object.values(node.data.node.template).some(
+          (field: any) => field?.edited === true
+        );
+      }
+      return false;
+    });
+  };
+
   const getFlowsFromFiles = async ({
     files,
   }: {
@@ -55,6 +68,16 @@ const useUploadFlow = () => {
   }): Promise<void> => {
     try {
       const flows = await getFlowsToUpload({ files });
+
+      // Check for custom components with "edited": true
+      for (const flow of flows) {
+        if (hasEditedComponents(flow)) {
+          throw new Error(
+            "Cannot import flows or components with custom edited components",
+          );
+        }
+      }
+
       for (const flow of flows) {
         await processDataFromFlow(flow);
       }
