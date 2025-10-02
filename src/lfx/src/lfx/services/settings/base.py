@@ -307,6 +307,12 @@ class Settings(BaseSettings):
     update_starter_projects: bool = True
     """If set to True, Langflow will update starter projects."""
 
+    # Custom Components
+    allow_custom_components: bool = True
+    """If set to False, Langflow will disable custom components functionality.
+    This includes hiding the 'New Custom Component' button, disabling code editing for all components,
+    and blocking imports of flows containing custom components."""
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def validate_cors_origins(cls, value):
