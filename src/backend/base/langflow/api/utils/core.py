@@ -108,6 +108,34 @@ def get_is_component_from_data(data: dict):
     return data.get("is_component")
 
 
+def flow_has_custom_components(flow_data: dict) -> bool:
+    """Check if a flow contains custom components.
+
+    Custom components are identified by:
+    - Having base_type as 'custom_components' or 'component' with code field
+    - Having a 'code' template field with custom component code
+    """
+    nodes = flow_data.get("data", {}).get("nodes", [])
+
+    for node in nodes:
+        node_data = node.get("data", {}).get("node", {})
+
+        # Check base_type
+        base_type = node_data.get("base_type", "")
+        if base_type == "custom_components":
+            return True
+
+        # Check if node has a code template field with CustomComponent code
+        template = node_data.get("template", {})
+        if "code" in template:
+            code_value = template.get("code", {}).get("value", "")
+            # Check if code contains CustomComponent class definition
+            if isinstance(code_value, str) and "class CustomComponent" in code_value:
+                return True
+
+    return False
+
+
 async def check_langflow_version(component: StoreComponentCreate) -> None:
     from langflow.utils.version import get_version_info
 
