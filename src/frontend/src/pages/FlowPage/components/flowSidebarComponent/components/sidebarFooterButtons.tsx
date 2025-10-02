@@ -5,6 +5,7 @@ import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import { ENABLE_NEW_SIDEBAR } from "@/customization/feature-flags";
 import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
 import AddMcpServerModal from "@/modals/addMcpServerModal";
+import { useUtilityStore } from "@/stores/utilityStore";
 
 const SidebarMenuButtons = ({
   customComponent,
@@ -14,6 +15,9 @@ const SidebarMenuButtons = ({
   const { activeSection } = useSidebar();
   const [addMcpOpen, setAddMcpOpen] = useState(false);
   const navigate = useCustomNavigate();
+  const allowCustomComponents = useUtilityStore(
+    (state) => state.allowCustomComponents,
+  );
 
   const handleAddMcpServerClick = () => {
     setAddMcpOpen(true);
@@ -59,7 +63,7 @@ const SidebarMenuButtons = ({
       </SidebarMenuButton>
       <AddMcpServerModal open={addMcpOpen} setOpen={setAddMcpOpen} />
     </>
-  ) : (
+  ) : allowCustomComponents ? (
     <SidebarMenuButton asChild className="group">
       <Button
         unstyled
@@ -81,7 +85,7 @@ const SidebarMenuButtons = ({
         </span>
       </Button>
     </SidebarMenuButton>
-  );
+  ) : null;
 };
 
 export default SidebarMenuButtons;
