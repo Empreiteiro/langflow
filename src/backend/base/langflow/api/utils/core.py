@@ -126,12 +126,12 @@ def flow_has_custom_components(flow_data: dict) -> bool:
         if base_type == "custom_components":
             return True
 
-        # Check if node has a code template field with CustomComponent code
+        # Check if node has a code template field with custom component code
         template = node_data.get("template", {})
         if "code" in template:
             code_value = template.get("code", {}).get("value", "")
-            # Check if code contains CustomComponent class definition
-            if isinstance(code_value, str) and "class CustomComponent" in code_value:
+            # Check if code contains Component class definition (from langflow.custom import Component)
+            if isinstance(code_value, str) and ("from langflow.custom import Component" in code_value or "from langflow import CustomComponent" in code_value):
                 return True
 
         # Check if any template field has 'edited': true
