@@ -23,6 +23,7 @@ export interface ConfigResponse {
   event_delivery: EventDeliveryType;
   webhook_auth_enable: boolean;
   voice_mode_available: boolean;
+  allow_custom_components: boolean;
 }
 
 export const useGetConfig: useQueryFunctionType<undefined, ConfigResponse> = (
@@ -49,6 +50,9 @@ export const useGetConfig: useQueryFunctionType<undefined, ConfigResponse> = (
   const setWebhookAuthEnable = useUtilityStore(
     (state) => state.setWebhookAuthEnable,
   );
+  const setAllowCustomComponents = useUtilityStore(
+    (state) => state.setAllowCustomComponents,
+  );
 
   const { query } = UseRequestProcessor();
 
@@ -72,6 +76,7 @@ export const useGetConfig: useQueryFunctionType<undefined, ConfigResponse> = (
       );
       setEventDelivery(data.event_delivery ?? EventDeliveryType.POLLING);
       setWebhookAuthEnable(data.webhook_auth_enable ?? true);
+      setAllowCustomComponents(data.allow_custom_components ?? true);
     }
     return data;
   };
