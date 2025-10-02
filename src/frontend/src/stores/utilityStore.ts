@@ -51,4 +51,7 @@ export const useUtilityStore = create<UtilityStoreType>((set, get) => ({
   webhookAuthEnable: true,
   setWebhookAuthEnable: (webhookAuthEnable: boolean) =>
     set({ webhookAuthEnable }),
+  allowCustomComponents: true,
+  setAllowCustomComponents: (allowCustomComponents: boolean) =>
+    set({ allowCustomComponents }),
 }));
