@@ -374,6 +374,7 @@ class ConfigResponse(BaseModel):
     event_delivery: Literal["polling", "streaming", "direct"]
     webhook_auth_enable: bool
     voice_mode_available: bool
+    allow_custom_components: bool
 
     @classmethod
     def from_settings(cls, settings: Settings, auth_settings) -> "ConfigResponse":
@@ -401,6 +402,7 @@ class ConfigResponse(BaseModel):
             event_delivery=settings.event_delivery,
             voice_mode_available=settings.voice_mode_available,
             webhook_auth_enable=auth_settings.WEBHOOK_AUTH_ENABLE,
+            allow_custom_components=settings.allow_custom_components,
         )
 
 
