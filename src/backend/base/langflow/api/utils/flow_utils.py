@@ -13,6 +13,7 @@ from sqlalchemy import delete
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from langflow.services.database.models.auth.authz import AuthzShare
 from langflow.services.database.models.deployment.exceptions import (
     araise_if_deployment_guard_error_or_skip,
 )
@@ -112,6 +113,14 @@ async def cascade_delete_flow(session: AsyncSession, flow_id: uuid.UUID) -> None
         if trace_ids:
             await session.exec(delete(SpanTable).where(col(SpanTable.trace_id).in_(trace_ids)))
             await session.exec(delete(TraceTable).where(col(TraceTable.id).in_(trace_ids)))
+        # authz_share is polymorphic over resource_type/resource_id with no
+        # FK, so DB cascades cannot remove stale share rows when the flow is
+        # deleted. Clean them up here so a deleted flow's grants do not
+        # silently survive — that would let an authorization plugin keep
+        # honoring share rows that point at a tombstoned resource.
+        await session.exec(
+            delete(AuthzShare).where(AuthzShare.resource_type == "flow").where(AuthzShare.resource_id == flow_id)
+        )
         await session.exec(delete(Flow).where(Flow.id == flow_id))
     except Exception as e:
         await araise_if_deployment_guard_error_or_skip(
@@ -133,6 +142,26 @@ def compute_virtual_flow_id(identifier: str | uuid.UUID, flow_id: uuid.UUID) -> 
         A deterministic UUID v5 derived from the identifier and flow_id.
     """
     return uuid.uuid5(uuid.NAMESPACE_DNS, f"{identifier}_{flow_id}")
+
+
+def scope_session_to_namespace(session: str | None, namespace: str) -> str | None:
+    """Wrap a caller-supplied session ID under a (client_id, flow_id) namespace.
+
+    Mitigates CVE-2026-33017: an unauthenticated public-flow caller cannot
+    address a session that lives outside its own namespace through a Memory
+    component, regardless of whether the caller supplies a non-empty,
+    pre-prefixed, or empty string.
+
+    Returns ``None`` unchanged. Returns the value unchanged when it equals the
+    namespace or already starts with ``f"{namespace}:"``. Otherwise prefixes
+    it -- including the empty-string case, which becomes ``f"{namespace}:"``.
+    """
+    if session is None:
+        return session
+    prefix = f"{namespace}:"
+    if session == namespace or session.startswith(prefix):
+        return session
+    return f"{prefix}{session}"
 
 
 async def verify_public_flow_and_get_user(
